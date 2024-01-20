@@ -10,8 +10,8 @@ class AudioProcessor(Protocol):
 
 
 class AudioStream(Iterator, ABC):
-    def __init__(self, sample_rate: int):
-        super().__init__()
+    def __init__(self, sample_rate: int, channels: int):
+        self.channels = channels
         self.sample_rate = sample_rate
         self.is_closed = False
         self.is_closing = False
