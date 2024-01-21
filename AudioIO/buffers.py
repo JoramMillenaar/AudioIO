@@ -63,15 +63,17 @@ class CircularBuffer(Buffer):
         if key.step is not None:
             raise NotImplementedError("CircularBuffer does not support slices with a step size")
 
-        if key.start is None:
-            key.start = 0
-        if key.stop is None:
-            key.stop = self.total_samples
-        if key.start < 0:
-            key.start += self.total_samples
-        if key.stop < 0:
-            key.stop += self.total_samples
-        return self.get_slice(key.start, key.stop)
+        start, stop = key.start, key.stop
+
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = self.total_samples
+        if start < 0:
+            start += self.total_samples
+        if stop < 0:
+            stop += self.total_samples
+        return self.get_slice(start, stop)
 
 
 class BufferedInput(Buffer):
