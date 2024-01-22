@@ -21,41 +21,28 @@ class CircularBuffer(Buffer):
         self.channels = channels
         self.max_history = max_history
         self._buffer = np.zeros((channels, max_history), dtype=np.float32)
-        self.total_samples = 0
-        self.current_position = 0
+        self.pushed_samples = 0
 
     def __len__(self):
-        return min(self.total_samples, self.max_history)
+        return min(self.pushed_samples, self.max_history)
 
     def get_slice(self, start: int, end: int) -> np.ndarray:
-        effective_start = start - (self.total_samples - self.max_history)
-        effective_end = end - (self.total_samples - self.max_history)
+        start_index = self.max_history - (self.pushed_samples - start)
+        end_index = self.max_history - (self.pushed_samples - end)
+        if start_index < 0:
+            raise NotEnoughSamplesInHistory(f"History under-reached by {-start_index} samples")
+        if end_index > self.max_history:
+            raise NotEnoughSamples(f"Buffer ran out of samples. Needed {self.max_history - end_index} more")
 
-        if effective_start < 0:
-            raise NotEnoughSamplesInHistory(f"History under-reached by {-effective_start} samples")
-        if effective_end > self.max_history:
-            raise NotEnoughSamples(f"Buffer ran out of samples. Needed {self.max_history - effective_end} more")
-
-        start_index = (self.current_position + effective_start) % self.max_history
-        end_index = (self.current_position + effective_end) % self.max_history
-
-        if start_index < end_index or effective_end == 0:
+        if start_index < end_index:
             return self._buffer[:, start_index:end_index]
         else:
             return np.hstack((self._buffer[:, start_index:], self._buffer[:, :end_index]))
 
     def push(self, audio_chunk: np.ndarray):
         chunk_length = audio_chunk.shape[1]
-        end_position = (self.current_position + chunk_length) % self.max_history
-        if self.current_position < end_position:
-            self._buffer[:, self.current_position:end_position] = audio_chunk
-        else:
-            space_at_end = self.max_history - self.current_position
-            self._buffer[:, self.current_position:] = audio_chunk[:, :space_at_end]
-            self._buffer[:, :end_position] = audio_chunk[:, space_at_end:]
-
-        self.current_position = end_position
-        self.total_samples += chunk_length
+        self._buffer = np.concatenate((self._buffer[:, chunk_length:], audio_chunk), axis=1)
+        self.pushed_samples += chunk_length
 
     def __getitem__(self, key: slice) -> np.ndarray:
         if not isinstance(key, slice):
@@ -68,11 +55,11 @@ class CircularBuffer(Buffer):
         if start is None:
             start = 0
         if stop is None:
-            stop = self.total_samples
+            stop = self.pushed_samples
         if start < 0:
-            start += self.total_samples
+            start += self.pushed_samples
         if stop < 0:
-            stop += self.total_samples
+            stop += self.pushed_samples
         return self.get_slice(start, stop)
 
 
