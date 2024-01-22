@@ -6,7 +6,7 @@ with open('README.md') as file:
 setup(
     name='AudioIO',
     description='A Python Toolkit of Interfaces for Audio Input and Outputs',
-    version='0.0.6',
+    version='0.0.7',
     author='Joram Millenaar',
     author_email='joormillenaar@live.nl',
     url='https://github.com/jofoks/AudioIO',

@@ -37,7 +37,7 @@ class AudioPlaybackProcessor:
         self.output.close()
 
 
-class AudioFileOutputProcessor(AudioProcessor):
+class WAVFileWriteStream(AudioProcessor):
     def __init__(self, filename: str, sample_rate: int, channels: int):
         self.channels = channels
         self.sample_rate = sample_rate
@@ -51,7 +51,8 @@ class AudioFileOutputProcessor(AudioProcessor):
         self.write_thread.start()
 
     def process(self, audio_chunk):
-        data = array_to_wav_format(audio_chunk)
+        data = np.reshape(audio_chunk, self.channels * audio_chunk.shape[1], order='F')
+        data = array_to_wav_format(data)
         self.write_thread.join()
         self.write_thread = threading.Thread(target=self.write_to_file, args=(data,))
         self.write_thread.start()

@@ -56,7 +56,7 @@ class WAVFileReadStream(AudioStream):
             data = np.frombuffer(frames, dtype=np.int16).astype(np.float32)
             data /= 32768  # Convert from int16 to float32 range [-1, 1]
 
-            data = np.reshape(data, (self.chunk_size, self.channels)).T
+            data = np.reshape(data, (self.channels, self.chunk_size), order='F')
 
             yield data
 
