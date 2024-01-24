@@ -28,7 +28,7 @@ class MicrophoneStream(AudioStream):
             self.open_stream()
 
         while not self.is_closed:
-            return self.stream.read(self.chunk_size)[0].T
+            yield self.stream.read(self.chunk_size)[0].T
 
     def close(self):
         if self.stream is not None:
